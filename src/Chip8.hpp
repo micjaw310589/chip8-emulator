@@ -31,6 +31,7 @@ class Chip8
     bool screen[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
     // instruction tables
+    uint16_t opcode;
     op_ptr OP_table[OP_SIZE];
     op_ptr OP_0_table[OP_0_SIZE];
     op_ptr OP_8_table[OP_8_SIZE];
@@ -38,9 +39,9 @@ class Chip8
     op_ptr OP_F_table[OP_F_SIZE];
 
     void table0();
-    void table8();
-    void tableE();
-    void tableF();
+    // void table8();
+    // void tableE();
+    // void tableF();
 
 public:
     Chip8();
@@ -88,6 +89,7 @@ public:
     void OP_Fx55();     // LD [I], Vx
     void OP_Fx65();     // LD Vx, [I]
 
+    // debug
     uint16_t getMemoryAt(uint16_t address) const;
 };
 

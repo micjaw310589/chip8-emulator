@@ -3,5 +3,6 @@
 int main()
 {
     MemoryTestSet::test_LoadFont();
+
     return 0;
 }
