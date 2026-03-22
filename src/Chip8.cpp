@@ -5,6 +5,11 @@
 
 using namespace std;
 
+void Chip8::table0()
+{
+
+}
+
 Chip8::Chip8()
     : registers{}
     , memory{}
@@ -17,6 +22,22 @@ Chip8::Chip8()
     , screen{}
 {
     loadFonts();
+
+    OP_table[0x0] = &Chip8::table0;
+    OP_table[0x1] = &Chip8::OP_1nnn;
+    OP_table[0x2] = &Chip8::OP_2nnn;
+    OP_table[0x3] = &Chip8::OP_3xkk;
+    OP_table[0x4] = &Chip8::OP_4xkk;
+    OP_table[0x5] = &Chip8::OP_5xy0;
+    OP_table[0x6] = &Chip8::OP_6xkk;
+    OP_table[0x7] = &Chip8::OP_7xkk;
+    // OP_table[0x8] = &Chip8::OP_8_table;
+    OP_table[0xA] = &Chip8::OP_Annn;
+    OP_table[0xB] = &Chip8::OP_Bnnn;
+    OP_table[0xC] = &Chip8::OP_Cxkk;
+    OP_table[0xD] = &Chip8::OP_Dxyn;
+    // OP_table[0xE] = &Chip8::OP_E_table;
+    // OP_table[0xF] = &Chip8::OP_F_table;
 }
 
 void Chip8::loadFonts()
@@ -60,36 +81,30 @@ void Chip8::OP_00E0()
     memset(screen, 0, sizeof(screen));
 }
 
-void Chip8::OP_1nnn(const uint16_t mem_idx)
+void Chip8::OP_1nnn()
 // JP addr - Save Program Controller with mem_idx
 {
-    if (mem_idx < MEMORY_SIZE)
-    {
-        pc = mem_idx;
-    }
 }
 
-void Chip8::OP_6xkk(const uint16_t reg_idx, const uint8_t byte)
+void Chip8::OP_6xkk()
 // LD Vx, byte - Put value kk (byte) into register Vx (reg_idx)
 {
-    registers[reg_idx] = byte;
 }
 
-void Chip8::OP_7xkk(const uint16_t reg_idx, const uint8_t byte)
+void Chip8::OP_7xkk()
 // ADD Vx + kk - Add value kk (byte) to the value stored in Vx (reg_idx) and override it with the result
 {
-    registers[reg_idx] += byte;
 }
 
-void Chip8::OP_Annn(const uint16_t mem_idx)
+void Chip8::OP_Annn()
 // LD I, addr - Set Index Register with memory idx
 {
-    index_register = mem_idx;
 }
 
 // void Chip8::OP_Dxyn()
 // {
-//     bitset<8> byte = memory[index_register];
+//     bitset<8> byte = memory[index_register];memory[index_register];
+//
 // }
 
 
