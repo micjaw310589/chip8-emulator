@@ -107,10 +107,10 @@ void Chip8::OP_2nnn()
 void Chip8::OP_3xkk()
 // SE Vx, byte - Skip next instruction if Vx == kk
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
     const auto byte = static_cast<uint8_t>(opcode & 0x00FFu);
 
-    if (registers[x_addr] == byte)
+    if (registers[x] == byte)
     {
         pc += 2;
     }
@@ -119,10 +119,10 @@ void Chip8::OP_3xkk()
 void Chip8::OP_4xkk()
 // SNE Vx, byte - Skip next instruction if Vx != kk
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
     const auto byte = static_cast<uint8_t>(opcode & 0x00FFu);
 
-    if (registers[x_addr] != byte)
+    if (registers[x] != byte)
     {
         pc += 2;
     }
@@ -131,10 +131,10 @@ void Chip8::OP_4xkk()
 void Chip8::OP_5xy0()
 // SE Vx, Vy - Skip next instruction if Vx == Vy
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
-    const auto y_addr = static_cast<uint8_t>((opcode & 0x00F0u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
 
-    if (registers[x_addr] == registers[y_addr])
+    if (registers[x] == registers[y])
     {
         pc += 2;
     }
@@ -143,28 +143,182 @@ void Chip8::OP_5xy0()
 void Chip8::OP_6xkk()
 // LD Vx, byte - Set Vx = kk
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
     const auto byte = static_cast<uint8_t>(opcode & 0x00FFu);
 
-    registers[x_addr] = byte;
+    registers[x] = byte;
 }
 
 void Chip8::OP_7xkk()
 // ADD Vx, byte - Set Vx = Vx + kk
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
     const auto byte = static_cast<uint8_t>(opcode & 0x00FFu);
 
-    registers[x_addr] += byte;
+    registers[x] += byte;
 }
 
 void Chip8::OP_8xy0()
 // LD Vx, Vy - Set Vx = Vy
 {
-    const auto x_addr = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
-    const auto y_addr = static_cast<uint8_t>((opcode & 0x00F0u) >> 8u);
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
 
-    registers[x_addr] = registers[y_addr];
+    registers[x] = registers[y];
+}
+
+void Chip8::OP_8xy1()
+// OR Vx, Vy - Set Vx = Vx OR Vy
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    registers[x] |= registers[y];
+}
+
+void Chip8::OP_8xy2()
+// AND Vx, Vy - Set Vx = Vx AND Vy
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    registers[x] &= registers[y];
+}
+
+void Chip8::OP_8xy3()
+// XOR Vx, Vy - Set Vx = Vx XOR Vy
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    registers[x] ^= registers[y];
+}
+
+void Chip8::OP_8xy4()
+// ADD Vx, Vy - Set Vx = Vx + Vy, set VF = carry.
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    const uint16_t result = registers[x] + registers[y];
+
+    if (result > 255u) {
+        registers[0xF] = 0x01u;
+    } else {
+        registers[0xF] = 0x00u;
+    }
+
+    registers[x] = 0xFFu & result;
+}
+
+void Chip8::OP_8xy5()
+// SUB Vx, Vy - Set Vx = Vx - Vy, set VF = NOT borrow.
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    if (registers[x] > registers[y]) {
+        registers[0xF] = 0x01u;
+    } else {
+        registers[0xF] = 0x00u;
+    }
+
+    registers[x] -= registers[y];
+}
+
+void Chip8::OP_8xy6()
+// SHR Vx {, Vy} - Set Vx = Vx SHR 1
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    registers[0xF] = registers[x] & 0x01u;
+
+    registers[x] >>= 1u;
+}
+
+void Chip8::OP_8xy7()
+// SUBN Vx, Vy - Set Vx = Vy - Vx, set VF = NOT borrow
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    if (registers[x] < registers[y]) {
+        registers[0xF] = 0x01u;
+    } else {
+        registers[0xF] = 0x00u;
+    }
+
+    registers[x] = registers[y] - registers[x];
+}
+
+void Chip8::OP_8xyE()
+// SHL Vx {, Vy} - Set Vx = Vx SHL 1
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    registers[0xF] = registers[x] & 0x80u;
+
+    registers[x] <<= 1u;
+}
+
+void Chip8::OP_9xy0()
+// SNE Vx, Vy - Skip next instruction if Vx != Vy
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+
+    if (registers[x] != registers[y]) {
+        pc += 2;
+    }
+}
+
+void Chip8::OP_Annn()
+// LD I, addr - Set I = nnn.
+{
+    const uint16_t addr = opcode & 0x0FFFu;
+
+    index_register = addr;
+}
+
+void Chip8::OP_Bnnn()
+// JP V0, addr - Jump to location nnn + V0
+{
+    const uint16_t addr = opcode & 0x0FFFu;
+
+    pc = addr + registers[0x0];
+}
+
+void Chip8::OP_Cxkk()
+// RND Vx, byte - Set Vx = random byte AND kk
+{
+    // rng
+}
+
+void Chip8::OP_Dxyn()
+// DRW Vx, Vy, nibble - Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
+    const uint8_t num_of_bytes = opcode & 0x000Fu;
+
+    for (uint8_t i = 0; i < num_of_bytes; i++) {
+        const uint8_t byte = memory[index_register + i];
+        const uint8_t x_px = registers[x];
+        const uint8_t y_px = registers[y];
+
+        uint8_t mask = 0x01u;
+        for (int j = 0; j < 8; j++) {
+            const uint32_t pixel = screen[y_px][x_px];
+            const uint8_t bit = byte & mask;
+            registers[0xF] = (pixel == 0x01u == bit) ? 0x01u : 0x00u;
+
+            screen[y_px][x_px] ^= bit;
+
+            mask <<= 1u;
+        }
+
+
+    }
 }
 
 

@@ -28,15 +28,15 @@ class Chip8
     uint8_t sp;
     uint8_t delay_timer;
     uint8_t sound_timer;
-    bool screen[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+    uint32_t screen[SCREEN_SIZE_Y][SCREEN_SIZE_X];
 
     // instruction tables
-    uint16_t opcode;
     op_ptr OP_table[OP_SIZE];
     op_ptr OP_0_table[OP_0_SIZE];
     op_ptr OP_8_table[OP_8_SIZE];
     op_ptr OP_E_table[OP_E_SIZE];
     op_ptr OP_F_table[OP_F_SIZE];
+    uint16_t opcode;
 
     void table0();
     // void table8();
