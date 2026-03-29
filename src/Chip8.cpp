@@ -1,15 +1,25 @@
 #include "Chip8.hpp"
 
 #include <cstring>
-#include <bitset>
+// #include <bitset>
+#include <chrono>
 #include <iostream>
 
 using namespace std;
+
+
 
 void Chip8::table0()
 {
 
 }
+
+uint8_t Chip8::generateRandomNumber()
+{
+    return dist_byte(rng);
+}
+
+
 
 Chip8::Chip8()
     : registers{}
@@ -21,7 +31,13 @@ Chip8::Chip8()
     , delay_timer{}
     , sound_timer{}
     , screen{}
-    , opcode{0x2121}
+    , keypad{}
+    , rng{static_cast<mt19937::result_type>(
+        chrono::steady_clock::now()
+        .time_since_epoch()
+        .count()
+    )}
+    , opcode{}
 {
     loadFonts();
 
@@ -45,7 +61,6 @@ Chip8::Chip8()
 void Chip8::loadFonts()
 {
     constexpr size_t SIZE = 80;
-    constexpr size_t FONT_NUM_OF_BYTES = 5;
     const uint8_t font_set[SIZE] = {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -65,10 +80,12 @@ void Chip8::loadFonts()
         0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
     const uint8_t* ptr_font = font_set;
-    uint8_t* ptr_memory = &memory[0x050];
+    uint8_t* ptr_memory = &memory[FONT_BEGINNING_IDX];
 
     while (ptr_font < font_set + SIZE)
     {
+        constexpr size_t FONT_NUM_OF_BYTES = 5;
+
         memcpy(ptr_memory, ptr_font, sizeof(uint16_t) * FONT_NUM_OF_BYTES);
         ptr_font += FONT_NUM_OF_BYTES;
         ptr_memory += FONT_NUM_OF_BYTES;
@@ -291,7 +308,10 @@ void Chip8::OP_Bnnn()
 void Chip8::OP_Cxkk()
 // RND Vx, byte - Set Vx = random byte AND kk
 {
-    // rng
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+    const auto byte = static_cast<uint8_t>(opcode & 0x00FFu);
+
+    registers[x] = generateRandomNumber() & byte;
 }
 
 void Chip8::OP_Dxyn()
@@ -301,26 +321,142 @@ void Chip8::OP_Dxyn()
     const auto y = static_cast<uint8_t>((opcode & 0x00F0u) >> 4u);
     const uint8_t num_of_bytes = opcode & 0x000Fu;
 
+    registers[0xF] = 0x00u;
+
     for (uint8_t i = 0; i < num_of_bytes; i++) {
-        const uint8_t byte = memory[index_register + i];
-        const uint8_t x_px = registers[x];
-        const uint8_t y_px = registers[y];
+        const uint8_t sprite_byte = memory[index_register + i];
+        const uint8_t x_px = registers[x] & (SCREEN_SIZE_X - 1);
+        const uint8_t y_px = registers[y] & (SCREEN_SIZE_Y - 1) + i;
 
-        uint8_t mask = 0x01u;
-        for (int j = 0; j < 8; j++) {
-            const uint32_t pixel = screen[y_px][x_px];
-            const uint8_t bit = byte & mask;
-            registers[0xF] = (pixel == 0x01u == bit) ? 0x01u : 0x00u;
+        const uint16_t screen_idx = y_px * SCREEN_SIZE_X + x_px;
 
-            screen[y_px][x_px] ^= bit;
+        uint8_t mask = 0b10000000u;
 
-            mask <<= 1u;
+        for (uint8_t b = sizeof(sprite_byte); b > 0; b--) {
+            const uint8_t px_bit = (sprite_byte & mask) >> (b - 1);
+            const uint32_t sprite_px = (px_bit == 0x00u) ? 0x00000000u : 0xFFFFFFFFu;
+            const uint32_t display_px = screen[screen_idx] ^ sprite_px;
+
+            if ((sprite_px & display_px) == 0x00000000u) {
+                registers[0xF] = 0x01u;
+            }
+
+            screen[screen_idx] = display_px;
+            mask >>= 1u;
         }
-
-
     }
 }
 
+void Chip8::OP_Ex9E()
+// SKP Vx - Skip next instruction if key with the value of Vx is pressed
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    const uint8_t key = registers[x];
+
+    if (keypad[key]) {
+        pc += 2;
+    }
+}
+
+void Chip8::OP_ExA1()
+// SKNP Vx - Skip next instruction if key with the value of Vx is not pressed
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    const uint8_t key = registers[x];
+
+    if (!keypad[key]) {
+        pc += 2;
+    }
+}
+
+void Chip8::OP_Fx07()
+// LD Vx, DT - Set Vx = delay timer value
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    registers[x] = delay_timer;
+}
+
+void Chip8::OP_Fx0A()
+// LD Vx, K - Wait for a key press, store the value of the key in Vx
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    for (uint8_t i = 0; i < KEYPAD_SIZE; i++) {
+        if (keypad[i]) {
+            registers[x] = i;
+            break;
+        }
+
+        pc -= 2;
+    }
+}
+
+void Chip8::OP_Fx15()
+// LD DT, Vx - Set delay timer = Vx
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    delay_timer = registers[x];
+}
+
+void Chip8::OP_Fx18()
+// LD ST, Vx - Set sound timer = Vx
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    sound_timer = registers[x];
+}
+
+void Chip8::OP_Fx1E()
+// ADD I, Vx - Set I = I + Vx
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    index_register += registers[x];
+}
+
+void Chip8::OP_Fx29()
+// LD F, Vx - Set I = location of sprite for digit Vx
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    const uint8_t sprite = registers[x];    // [0x00u ; 0x0Fu]
+
+    index_register = FONT_BEGINNING_IDX + sprite;
+}
+
+void Chip8::OP_Fx33()
+// LD B, Vx - Store BCD representation of Vx in memory locations I, I+1, and I+2
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    uint8_t val = registers[x];
+    uint8_t bcd = 0u;
+
+    for (int i = 3; i > 0; i--) {
+        memory[index_register + (i-1)] = val % 10u;
+        val /= 10u;
+    }
+}
+
+void Chip8::OP_Fx55()
+// LD [I], Vx - Store registers V0 through Vx in memory starting at location I
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    memcpy(memory + index_register, registers, sizeof(registers[0]) * x);
+}
+
+void Chip8::OP_Fx65()
+// LD Vx, [I] - Read registers V0 through Vx from memory starting at location I
+{
+    const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
+
+    memcpy(registers, memory + index_register, sizeof(registers[0]) * x);
+}
 
 
 uint16_t Chip8::getMemoryAt(const uint16_t address) const

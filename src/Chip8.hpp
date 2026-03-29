@@ -2,6 +2,8 @@
 #define CHIP8_EMULATOR_CHIP8_HPP
 
 #include <cstdint>
+#include <random>
+// #include <chrono>
 using namespace std;
 
 class Chip8
@@ -13,6 +15,9 @@ class Chip8
     static constexpr uint8_t STACK_SIZE = 16;
     static constexpr uint8_t SCREEN_SIZE_X = 64;
     static constexpr uint8_t SCREEN_SIZE_Y = 32;
+    static constexpr uint8_t KEYPAD_SIZE = 16;
+
+    static constexpr uint16_t FONT_BEGINNING_IDX = 0x050u;
 
     static constexpr uint8_t OP_SIZE = 16;
     static constexpr uint8_t OP_0_SIZE = 2;
@@ -28,7 +33,12 @@ class Chip8
     uint8_t sp;
     uint8_t delay_timer;
     uint8_t sound_timer;
-    uint32_t screen[SCREEN_SIZE_Y][SCREEN_SIZE_X];
+    uint32_t screen[SCREEN_SIZE_Y * SCREEN_SIZE_X];
+    bool keypad[KEYPAD_SIZE];
+
+    // other fields (not emulator related)
+    mt19937 rng;
+    uniform_int_distribution<> dist_byte{0,255};
 
     // instruction tables
     op_ptr OP_table[OP_SIZE];
@@ -42,6 +52,8 @@ class Chip8
     // void table8();
     // void tableE();
     // void tableF();
+
+    uint8_t generateRandomNumber();
 
 public:
     Chip8();
