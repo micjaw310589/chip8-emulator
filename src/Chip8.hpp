@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <random>
-// #include <chrono>
+#include <chrono>
 using namespace std;
 
 class Chip8
@@ -20,10 +20,10 @@ class Chip8
     static constexpr uint16_t FONT_BEGINNING_IDX = 0x050u;
 
     static constexpr uint8_t OP_SIZE = 16;
-    static constexpr uint8_t OP_0_SIZE = 2;
-    static constexpr uint8_t OP_8_SIZE = 9;
-    static constexpr uint8_t OP_E_SIZE = 2;
-    static constexpr uint8_t OP_F_SIZE = 9;
+    static constexpr uint8_t OP_0_SIZE = 15;
+    static constexpr uint8_t OP_8_SIZE = 15;
+    static constexpr uint8_t OP_E_SIZE = 15;
+    static constexpr uint8_t OP_F_SIZE = 102;
 
     uint8_t registers[REGISTER_SIZE];
     uint8_t memory[MEMORY_SIZE];
@@ -36,10 +36,6 @@ class Chip8
     uint32_t screen[SCREEN_SIZE_Y * SCREEN_SIZE_X];
     bool keypad[KEYPAD_SIZE];
 
-    // other fields (not emulator related)
-    mt19937 rng;
-    uniform_int_distribution<> dist_byte{0,255};
-
     // instruction tables
     op_ptr OP_table[OP_SIZE];
     op_ptr OP_0_table[OP_0_SIZE];
@@ -49,23 +45,25 @@ class Chip8
     uint16_t opcode;
 
     void table0();
-    // void table8();
-    // void tableE();
-    // void tableF();
+    void table8();
+    void tableE();
+    void tableF();
+
+    // other fields
+    mt19937 rng;
+    uniform_int_distribution<> dist_byte{0,255};
+    decltype(std::chrono::system_clock::now()) time;
 
     uint8_t generateRandomNumber();
+    void loadFonts();
 
 public:
     Chip8();
 
-    // memory
-    void loadFonts();
-
-    // stack
-    // void pushPCToStack();
-    // void pullPCFromStack();
+    void cycle();
 
     // instructions
+    void OP_NULL();     // NULL
     void OP_00E0();     // CLS
     void OP_00EE();     // RET
     void OP_1nnn();     // JP addr

@@ -1,9 +1,7 @@
 #include "Chip8.hpp"
-
 #include <cstring>
-// #include <bitset>
 #include <chrono>
-#include <iostream>
+// #include <iostream>
 
 using namespace std;
 
@@ -11,51 +9,27 @@ using namespace std;
 
 void Chip8::table0()
 {
+    (this->*OP_0_table[opcode & 0x000Fu])();
+}
 
+void Chip8::table8()
+{
+    (this->*OP_8_table[opcode & 0x000Fu])();
+}
+
+void Chip8::tableE()
+{
+    (this->*OP_E_table[opcode & 0x000Fu])();
+}
+
+void Chip8::tableF()
+{
+    (this->*OP_F_table[opcode & 0x00FFu])();
 }
 
 uint8_t Chip8::generateRandomNumber()
 {
     return dist_byte(rng);
-}
-
-
-
-Chip8::Chip8()
-    : registers{}
-    , memory{}
-    , index_register{}
-    , pc{0}
-    , stack{}
-    , sp{0}
-    , delay_timer{}
-    , sound_timer{}
-    , screen{}
-    , keypad{}
-    , rng{static_cast<mt19937::result_type>(
-        chrono::steady_clock::now()
-        .time_since_epoch()
-        .count()
-    )}
-    , opcode{}
-{
-    loadFonts();
-
-    OP_table[0x0] = &Chip8::table0;
-    OP_table[0x1] = &Chip8::OP_1nnn;
-    OP_table[0x2] = &Chip8::OP_2nnn;
-    OP_table[0x3] = &Chip8::OP_3xkk;
-    // OP_table[0x4] = &Chip8::OP_4xkk;
-    // OP_table[0x5] = &Chip8::OP_5xy0;
-    // OP_table[0x6] = &Chip8::OP_6xkk;
-    // OP_table[0x7] = &Chip8::OP_7xkk;
-    // // OP_table[0x8] = &Chip8::OP_8_table;
-    // OP_table[0xA] = &Chip8::OP_Annn;
-    // OP_table[0xB] = &Chip8::OP_Bnnn;
-    // OP_table[0xC] = &Chip8::OP_Cxkk;
-    // OP_table[0xD] = &Chip8::OP_Dxyn;
-    // OP_table[0xE] = &Chip8::OP_E_table;
-    // OP_table[0xF] = &Chip8::OP_F_table;
 }
 
 void Chip8::loadFonts()
@@ -79,20 +53,106 @@ void Chip8::loadFonts()
         0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
         0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
-    const uint8_t* ptr_font = font_set;
-    uint8_t* ptr_memory = &memory[FONT_BEGINNING_IDX];
 
-    while (ptr_font < font_set + SIZE)
-    {
-        constexpr size_t FONT_NUM_OF_BYTES = 5;
+    memcpy(&memory[FONT_BEGINNING_IDX], font_set, sizeof(font_set[0]) * SIZE);
+}
 
-        memcpy(ptr_memory, ptr_font, sizeof(uint16_t) * FONT_NUM_OF_BYTES);
-        ptr_font += FONT_NUM_OF_BYTES;
-        ptr_memory += FONT_NUM_OF_BYTES;
+
+
+Chip8::Chip8()
+    : registers{}
+    , memory{}
+    , index_register{}
+    , pc{0}
+    , stack{}
+    , sp{0}
+    , delay_timer{}
+    , sound_timer{}
+    , screen{}
+    , keypad{}
+    , OP_table{&Chip8::OP_NULL}
+    , OP_0_table{&Chip8::OP_NULL}
+    , OP_8_table{&Chip8::OP_NULL}
+    , OP_E_table{&Chip8::OP_NULL}
+    , OP_F_table{&Chip8::OP_NULL}
+    , opcode{}
+    , rng{static_cast<mt19937::result_type>(
+        chrono::steady_clock::now()
+        .time_since_epoch()
+        .count()
+    )}
+    , time{std::chrono::system_clock::now()}
+{
+    OP_table[0x0] = &Chip8::table0;
+    OP_table[0x1] = &Chip8::OP_1nnn;
+    OP_table[0x2] = &Chip8::OP_2nnn;
+    OP_table[0x3] = &Chip8::OP_3xkk;
+    OP_table[0x4] = &Chip8::OP_4xkk;
+    OP_table[0x5] = &Chip8::OP_5xy0;
+    OP_table[0x6] = &Chip8::OP_6xkk;
+    OP_table[0x7] = &Chip8::OP_7xkk;
+    OP_table[0x8] = &Chip8::table8;
+    OP_table[0xA] = &Chip8::OP_Annn;
+    OP_table[0xB] = &Chip8::OP_Bnnn;
+    OP_table[0xC] = &Chip8::OP_Cxkk;
+    OP_table[0xD] = &Chip8::OP_Dxyn;
+    OP_table[0xE] = &Chip8::tableE;
+    OP_table[0xF] = &Chip8::tableF;
+
+    OP_0_table[0x0] = &Chip8::OP_00E0;
+    OP_0_table[0xE] = &Chip8::OP_00EE;
+
+    OP_8_table[0x0] = &Chip8::OP_8xy0;
+    OP_8_table[0x1] = &Chip8::OP_8xy1;
+    OP_8_table[0x2] = &Chip8::OP_8xy2;
+    OP_8_table[0x3] = &Chip8::OP_8xy3;
+    OP_8_table[0x4] = &Chip8::OP_8xy4;
+    OP_8_table[0x5] = &Chip8::OP_8xy5;
+    OP_8_table[0x6] = &Chip8::OP_8xy6;
+    OP_8_table[0x7] = &Chip8::OP_8xy7;
+    OP_8_table[0xE] = &Chip8::OP_8xyE;
+
+    OP_E_table[0x1] = &Chip8::OP_ExA1;
+    OP_E_table[0xE] = &Chip8::OP_Ex9E;
+
+    OP_F_table[0x07] = &Chip8::OP_Fx07;
+    OP_F_table[0x0A] = &Chip8::OP_Fx0A;
+    OP_F_table[0x15] = &Chip8::OP_Fx15;
+    OP_F_table[0x18] = &Chip8::OP_Fx18;
+    OP_F_table[0x1E] = &Chip8::OP_Fx1E;
+    OP_F_table[0x29] = &Chip8::OP_Fx29;
+    OP_F_table[0x33] = &Chip8::OP_Fx33;
+    OP_F_table[0x55] = &Chip8::OP_Fx55;
+    OP_F_table[0x65] = &Chip8::OP_Fx65;
+
+    loadFonts();
+}
+
+
+void Chip8::cycle()
+{
+    opcode = memory[pc] << 8u | memory[pc + 1];
+    pc += 2;
+
+    const uint8_t idx = (opcode & 0xF000u) >> 12u;
+    (this->*OP_table[idx])();
+
+    if (delay_timer > 0) {
+        delay_timer--;
+    }
+
+    if (sound_timer > 0) {
+        sound_timer--;
     }
 }
 
 
+
+void Chip8::OP_NULL()
+// NULL - does nothing (filler)
+{
+    return;
+}
 
 void Chip8::OP_00E0()
 // CLS - Clear display
@@ -434,7 +494,6 @@ void Chip8::OP_Fx33()
     const auto x = static_cast<uint8_t>((opcode & 0x0F00u) >> 8u);
 
     uint8_t val = registers[x];
-    uint8_t bcd = 0u;
 
     for (int i = 3; i > 0; i--) {
         memory[index_register + (i-1)] = val % 10u;
