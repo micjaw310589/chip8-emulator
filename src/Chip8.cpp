@@ -75,7 +75,7 @@ Chip8::Chip8()
     , OP_8_table{&Chip8::OP_NULL}
     , OP_E_table{&Chip8::OP_NULL}
     , OP_F_table{&Chip8::OP_NULL}
-    , opcode{}
+    , opcode{PROG_MEM_BEGINNING_IDX}
     , rng{static_cast<mt19937::result_type>(
         chrono::steady_clock::now()
         .time_since_epoch()
@@ -129,6 +129,7 @@ Chip8::Chip8()
 }
 
 
+
 void Chip8::cycle()
 {
     opcode = memory[pc] << 8u | memory[pc + 1];
@@ -163,7 +164,7 @@ void Chip8::OP_00E0()
 void Chip8::OP_00EE()
 // RET - Return from a subroutine
 {
-    pc = sp--;
+    pc = stack[sp--];
 }
 
 void Chip8::OP_1nnn()

@@ -18,6 +18,7 @@ class Chip8
     static constexpr uint8_t KEYPAD_SIZE = 16;
 
     static constexpr uint16_t FONT_BEGINNING_IDX = 0x050u;
+    static constexpr uint16_t PROG_MEM_BEGINNING_IDX = 0x200u;
 
     static constexpr uint8_t OP_SIZE = 16;
     static constexpr uint8_t OP_0_SIZE = 15;
