@@ -11,3 +11,6 @@ add_executable(chip8_emulator
         tests/MemoryTestSet.cpp
         tests/MemoryTestSet.hpp
         main.cpp)
+
+find_package(SDL3 REQUIRED)
+target_link_libraries(chip8_emulator PRIVATE SDL3::SDL3)

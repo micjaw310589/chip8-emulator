@@ -1,7 +1,8 @@
 #include "Chip8.hpp"
 #include <cstring>
 #include <chrono>
-// #include <iostream>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 
@@ -63,7 +64,7 @@ Chip8::Chip8()
     : registers{}
     , memory{}
     , index_register{}
-    , pc{0}
+    , pc{PROG_MEM_BEGINNING_IDX}
     , stack{}
     , sp{0}
     , delay_timer{}
@@ -81,7 +82,6 @@ Chip8::Chip8()
         .time_since_epoch()
         .count()
     )}
-    , time{std::chrono::system_clock::now()}
 {
     OP_table[0x0] = &Chip8::table0;
     OP_table[0x1] = &Chip8::OP_1nnn;
@@ -129,6 +129,31 @@ Chip8::Chip8()
 }
 
 
+bool Chip8::loadROM(const std::string& filepath)
+{
+    ifstream file(filepath, ios::binary | ios::ate);
+
+    if (!file) {
+        std::cerr << "ROM file couldn't be loaded! Check your filepath: " + filepath;
+        return false;
+    }
+
+    streamsize size = file.tellg();
+    constexpr int MAX_ROM_SIZE = MEMORY_SIZE - PROG_MEM_BEGINNING_IDX;
+
+    if (size > MAX_ROM_SIZE) {
+        std::cerr << "ROM file is too large: " + to_string(size) + "/" + to_string(MAX_ROM_SIZE) + " B";
+        return false;
+    }
+
+    file.seekg(0, ios::beg);
+
+    if (file.read(reinterpret_cast<char*>(&memory[PROG_MEM_BEGINNING_IDX]), size)) {
+        return true;
+    }
+
+    return false;
+}
 
 void Chip8::cycle()
 {
@@ -147,6 +172,15 @@ void Chip8::cycle()
     }
 }
 
+const uint32_t *Chip8::getScreenAddr() const
+{
+    return screen;
+}
+
+void Chip8::setKeyPress(const uint8_t key, const bool isDown)
+{
+    keypad[key] = isDown;
+}
 
 
 void Chip8::OP_NULL()
@@ -383,18 +417,19 @@ void Chip8::OP_Dxyn()
     const uint8_t num_of_bytes = opcode & 0x000Fu;
 
     registers[0xF] = 0x00u;
+    const uint8_t x_px = registers[x] & (SCREEN_SIZE_X - 1);
+    const uint8_t y_px = registers[y] & (SCREEN_SIZE_Y - 1);
+
 
     for (uint8_t i = 0; i < num_of_bytes; i++) {
         const uint8_t sprite_byte = memory[index_register + i];
-        const uint8_t x_px = registers[x] & (SCREEN_SIZE_X - 1);
-        const uint8_t y_px = registers[y] & (SCREEN_SIZE_Y - 1) + i;
-
-        const uint16_t screen_idx = y_px * SCREEN_SIZE_X + x_px;
 
         uint8_t mask = 0b10000000u;
 
-        for (uint8_t b = sizeof(sprite_byte); b > 0; b--) {
-            const uint8_t px_bit = (sprite_byte & mask) >> (b - 1);
+        for (uint8_t b = 0; b < 8; b++) {
+            const uint16_t screen_idx = (y_px + i) * SCREEN_SIZE_X + (x_px + b);
+
+            const uint8_t px_bit = (sprite_byte & mask) >> (7 - b);
             const uint32_t sprite_px = (px_bit == 0x00u) ? 0x00000000u : 0xFFFFFFFFu;
             const uint32_t display_px = screen[screen_idx] ^ sprite_px;
 

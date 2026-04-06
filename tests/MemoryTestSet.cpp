@@ -4,7 +4,7 @@
 #include <bitset>
 
 bool MemoryTestSet::test_LoadFont()
-// tries to read 3 characters from memory (first, middle, last) and checks for pattern match.
+// tries to read 3 characters from memory (first, middle and last) and checks for pattern match.
 {
     // expected output
     const uint16_t expected_0[5] = {0xF0, 0x90, 0x90, 0x90, 0xF0};

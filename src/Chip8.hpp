@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <random>
-#include <chrono>
+
 using namespace std;
 
 class Chip8
@@ -53,7 +53,6 @@ class Chip8
     // other fields
     mt19937 rng;
     uniform_int_distribution<> dist_byte{0,255};
-    decltype(std::chrono::system_clock::now()) time;
 
     uint8_t generateRandomNumber();
     void loadFonts();
@@ -61,10 +60,15 @@ class Chip8
 public:
     Chip8();
 
+    bool loadROM(const std::string& filepath);
+
     void cycle();
 
+    const uint32_t* getScreenAddr() const;
+    void setKeyPress(uint8_t key, bool isDown);
+
     // instructions
-    void OP_NULL();     // NULL
+    void OP_NULL();
     void OP_00E0();     // CLS
     void OP_00EE();     // RET
     void OP_1nnn();     // JP addr
