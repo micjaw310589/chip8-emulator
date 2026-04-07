@@ -92,6 +92,7 @@ Chip8::Chip8()
     OP_table[0x6] = &Chip8::OP_6xkk;
     OP_table[0x7] = &Chip8::OP_7xkk;
     OP_table[0x8] = &Chip8::table8;
+    OP_table[0x9] = &Chip8::OP_9xy0;
     OP_table[0xA] = &Chip8::OP_Annn;
     OP_table[0xB] = &Chip8::OP_Bnnn;
     OP_table[0xC] = &Chip8::OP_Cxkk;
@@ -212,7 +213,7 @@ void Chip8::OP_2nnn()
 // CALL addr - Call subroutine at nnn
 {
     const uint16_t addr = opcode & 0x0FFFu;
-    stack[sp++] = pc;
+    stack[++sp] = pc;
     pc = addr;
 }
 
@@ -427,7 +428,8 @@ void Chip8::OP_Dxyn()
         uint8_t mask = 0b10000000u;
 
         for (uint8_t b = 0; b < 8; b++) {
-            const uint16_t screen_idx = (y_px + i) * SCREEN_SIZE_X + (x_px + b);
+            // const uint16_t screen_idx = (y_px + i) * SCREEN_SIZE_X + (x_px + b);
+            const uint16_t screen_idx = ((y_px + i) & (SCREEN_SIZE_Y - 1)) * SCREEN_SIZE_X + ((x_px + b) & (SCREEN_SIZE_X - 1));
 
             const uint8_t px_bit = (sprite_byte & mask) >> (7 - b);
             const uint32_t sprite_px = (px_bit == 0x00u) ? 0x00000000u : 0xFFFFFFFFu;

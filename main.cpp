@@ -9,6 +9,7 @@ int main(int argc, char* argv[])
     constexpr uint16_t LOGICAL_WIDTH_PX = 64;
     constexpr uint16_t LOGICAL_HEIGHT_PX = 32;
 
+    // constexpr double cpu_clock = 1.0 / 60 * 1000;
 
     if(!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -32,7 +33,7 @@ int main(int argc, char* argv[])
     SDL_SetTextureScaleMode(frame_texture, SDL_SCALEMODE_NEAREST);
 
     Chip8 chip8;
-    if (!chip8.loadROM("../test-roms/IBM-Logo.ch8")) {
+    if (!chip8.loadROM("../test-roms/pong-1-player.ch8")) {
         return 1;
     }
 
@@ -155,6 +156,9 @@ int main(int argc, char* argv[])
                 }
             }
         }
+
+        // SDL_Delay(static_cast<uint32_t>(cpu_clock));
+        SDL_Delay(16);
 
         chip8.cycle();
 
