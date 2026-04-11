@@ -10,7 +10,7 @@ using namespace std;
 class Display {
 public:
     Display(string_view title, uint16_t physicalWidth, uint16_t physicalHeight,
-                uint16_t logicalWidth, uint16_t logicalHeight);
+                uint16_t logicalWidth, uint16_t logicalHeight, bool enableFullscreen);
     ~Display();
 
     bool isInitialized();

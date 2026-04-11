@@ -1,7 +1,7 @@
 #include "Display.hpp"
 
 Display::Display(const string_view title, const uint16_t physicalWidth, const uint16_t physicalHeight,
-            const uint16_t logicalWidth, const uint16_t logicalHeight)
+            const uint16_t logicalWidth, const uint16_t logicalHeight, const bool enableFullscreen)
         : logicalWidth(logicalWidth)
         , initSuccessful(false)
 {
@@ -11,10 +11,19 @@ Display::Display(const string_view title, const uint16_t physicalWidth, const ui
         return;
     }
 
-    if (!SDL_CreateWindowAndRenderer(title.data(), physicalWidth, physicalHeight,
-        SDL_WINDOW_OPENGL, &window, &renderer)) {
-        SDL_Log("SDL couldn't create window and renderer! SDL_Error: %s", SDL_GetError());
-        return;
+    if (enableFullscreen) {
+        if (!SDL_CreateWindowAndRenderer(title.data(), physicalWidth, physicalHeight,
+            SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN, &window, &renderer)) {
+            SDL_Log("SDL couldn't create window and renderer! SDL_Error: %s", SDL_GetError());
+            return;
+        }
+    }
+    else {
+        if (!SDL_CreateWindowAndRenderer(title.data(), physicalWidth, physicalHeight,
+            SDL_WINDOW_OPENGL, &window, &renderer)) {
+            SDL_Log("SDL couldn't create window and renderer! SDL_Error: %s", SDL_GetError());
+            return;
+            }
     }
 
     SDL_SetRenderLogicalPresentation(renderer, logicalWidth, logicalHeight,

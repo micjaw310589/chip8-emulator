@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <random>
+#include <string_view>
 
 using namespace std;
 
@@ -60,7 +61,7 @@ class Chip8
 public:
     Chip8();
 
-    bool loadROM(const std::string& filepath);
+    bool loadROM(const char* filepath);
 
     void cycle();
 

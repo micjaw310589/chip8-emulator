@@ -130,12 +130,12 @@ Chip8::Chip8()
 }
 
 
-bool Chip8::loadROM(const std::string& filepath)
+bool Chip8::loadROM(const char* filepath)
 {
     ifstream file(filepath, ios::binary | ios::ate);
 
     if (!file) {
-        std::cerr << "ROM file couldn't be loaded! Check your filepath: " + filepath;
+        std::cerr << "ROM file couldn't be loaded! Check your filepath: " + string(filepath);
         return false;
     }
 
