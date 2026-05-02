@@ -57,12 +57,33 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::cerr << static_cast<uint32_t>(1.0/clock_hz * 1000) << '\n';
+    const auto MIN_CYCLE_TIME_NS = static_cast<uint64_t>(1.0/clock_hz * 1e9);
+    uint64_t CPU_accu_start = SDL_GetTicksNS();
+    uint64_t Timers_accu_start = SDL_GetTicksNS();
+
 
     while (display.processInput(chip8)) {
-        SDL_Delay(static_cast<uint32_t>(1.0/clock_hz * 1000));
+        constexpr uint64_t _60HZ_PERIOD_NS = 16666667;
 
-        chip8.cycle();
+        uint64_t CPU_accu = SDL_GetTicksNS() - CPU_accu_start;
+        uint64_t Timers_accu = SDL_GetTicksNS() - Timers_accu_start;
+
+
+        if (CPU_accu >= MIN_CYCLE_TIME_NS) {
+
+            chip8.cycle();
+
+            CPU_accu_start += CPU_accu;
+        }
+
+        if (Timers_accu >= _60HZ_PERIOD_NS) {
+
+            chip8.decrDelayTimer();
+            chip8.decrSoundTimer();
+
+            Timers_accu_start += Timers_accu;
+        }
+
 
         display.render(chip8.getScreenAddr());
     }

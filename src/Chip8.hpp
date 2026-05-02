@@ -58,16 +58,6 @@ class Chip8
     uint8_t generateRandomNumber();
     void loadFonts();
 
-public:
-    Chip8();
-
-    bool loadROM(const char* filepath);
-
-    void cycle();
-
-    const uint32_t* getScreenAddr() const;
-    void setKeyPress(uint8_t key, bool isDown);
-
     // instructions
     void OP_NULL();
     void OP_00E0();     // CLS
@@ -104,6 +94,18 @@ public:
     void OP_Fx33();     // LD [I], Vx
     void OP_Fx55();     // LD [I], Vx
     void OP_Fx65();     // LD Vx, [I]
+
+public:
+    Chip8();
+
+    bool loadROM(const char* filepath);
+
+    void cycle();
+    bool decrDelayTimer();
+    bool decrSoundTimer();
+
+    const uint32_t* getScreenAddr() const;
+    void setKeyPress(uint8_t key, bool isDown);
 
     // debug
     uint16_t getMemoryAt(uint16_t address) const;

@@ -158,19 +158,33 @@ bool Chip8::loadROM(const char* filepath)
 
 void Chip8::cycle()
 {
+    // fetch
     opcode = memory[pc] << 8u | memory[pc + 1];
     pc += 2;
 
+    // decode
     const uint8_t idx = (opcode & 0xF000u) >> 12u;
-    (this->*OP_table[idx])();
 
+    // execute
+    (this->*OP_table[idx])();
+}
+
+bool Chip8::decrDelayTimer()
+{
     if (delay_timer > 0) {
         delay_timer--;
+        return true;
     }
+    return false;
+}
 
+bool Chip8::decrSoundTimer()
+{
     if (sound_timer > 0) {
         sound_timer--;
+        return true;
     }
+    return false;
 }
 
 const uint32_t *Chip8::getScreenAddr() const

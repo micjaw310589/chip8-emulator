@@ -69,6 +69,7 @@ bool Display::processInput(Chip8& chip8)
             bool isPressed = (event.type == SDL_EVENT_KEY_DOWN);
 
             switch (event.key.scancode) {
+                case SDL_SCANCODE_ESCAPE: return false;
                 case SDL_SCANCODE_1: chip8.setKeyPress(0x1, isPressed); break;
                 case SDL_SCANCODE_2: chip8.setKeyPress(0x2, isPressed); break;
                 case SDL_SCANCODE_3: chip8.setKeyPress(0x3, isPressed); break;
