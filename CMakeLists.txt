@@ -13,6 +13,8 @@ add_executable(chip8_emulator
         main.cpp
         src/Display.cpp
         src/Display.hpp
+        src/Sound.cpp
+        src/Sound.hpp
 )
 
 find_package(SDL3 REQUIRED)

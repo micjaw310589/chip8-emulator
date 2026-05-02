@@ -68,7 +68,7 @@ Chip8::Chip8()
     , stack{}
     , sp{0}
     , delay_timer{}
-    , sound_timer{}
+    , sound_timer{120}
     , screen{}
     , keypad{}
     , OP_table{&Chip8::OP_NULL}
@@ -190,6 +190,11 @@ bool Chip8::decrSoundTimer()
 const uint32_t *Chip8::getScreenAddr() const
 {
     return screen;
+}
+
+uint8_t Chip8::getSoundTimer() const
+{
+    return sound_timer;
 }
 
 void Chip8::setKeyPress(const uint8_t key, const bool isDown)

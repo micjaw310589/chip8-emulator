@@ -105,6 +105,7 @@ public:
     bool decrSoundTimer();
 
     const uint32_t* getScreenAddr() const;
+    uint8_t getSoundTimer() const;
     void setKeyPress(uint8_t key, bool isDown);
 
     // debug

@@ -2,6 +2,7 @@
 
 #include "src/Chip8.hpp"
 #include "src/Display.hpp"
+#include "src/Sound.hpp"
 #include <SDL3/SDL.h>
 #include <sstream>
 #include <iostream>
@@ -46,6 +47,7 @@ int main(int argc, char* argv[])
 
     Display display("Chip-8 Emulator", PHYSICAL_WIDTH_PX, PHYSICAL_HEIGHT_PX,
                     LOGICAL_WIDTH_PX, LOGICAL_HEIGHT_PX, isFullscreen);
+    Sound sound;
 
     if (!display.isInitialized()) {
         return 1;
@@ -61,13 +63,12 @@ int main(int argc, char* argv[])
     uint64_t CPU_accu_start = SDL_GetTicksNS();
     uint64_t Timers_accu_start = SDL_GetTicksNS();
 
-
     while (display.processInput(chip8)) {
         constexpr uint64_t _60HZ_PERIOD_NS = 16666667;
+        sound.bufferSamples();
 
         uint64_t CPU_accu = SDL_GetTicksNS() - CPU_accu_start;
         uint64_t Timers_accu = SDL_GetTicksNS() - Timers_accu_start;
-
 
         if (CPU_accu >= MIN_CYCLE_TIME_NS) {
 
@@ -84,6 +85,12 @@ int main(int argc, char* argv[])
             Timers_accu_start += Timers_accu;
         }
 
+        if (chip8.getSoundTimer() > 0u) {
+            sound.playSound();
+        }
+        else {
+            sound.pauseSound();
+        }
 
         display.render(chip8.getScreenAddr());
     }
