@@ -9,4 +9,4 @@ SDL3 library is required to build and compile this project. See [SDL3 github](ht
 
 ## How to run
 
-./chip8_emulator \[path_to_rom\] \[clock_hz\] \[window_heigh_px\]
+./chip8_emulator \[path_to_rom\] \[cycle_clock_hz\] \[window_height_px\]
