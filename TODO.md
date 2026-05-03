@@ -5,7 +5,7 @@
 
 ## SHOULD
 - [x] window exit on ESC (why was it not there yet??)
-- [ ] refactor time accumulators (get them into classes or sth)
+- [x] refactor time accumulators (get them into classes or sth)
 - [ ] refactor cli arguments (struct?)
 - [ ] fix screen flickering
 - [ ] clean up the repo: delete useless files, write proper README

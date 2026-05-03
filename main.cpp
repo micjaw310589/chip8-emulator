@@ -3,6 +3,7 @@
 #include "src/Chip8.hpp"
 #include "src/Display.hpp"
 #include "src/Sound.hpp"
+#include "src/TimeAccumulatorNS.hpp"
 #include <SDL3/SDL.h>
 #include <sstream>
 #include <iostream>
@@ -59,30 +60,31 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    const auto MIN_CYCLE_TIME_NS = static_cast<uint64_t>(1.0/clock_hz * 1e9);
-    uint64_t CPU_accu_start = SDL_GetTicksNS();
-    uint64_t Timers_accu_start = SDL_GetTicksNS();
+    const auto MACHINE_CLOCK_PERIOD_NS = static_cast<uint64_t>(1.0/clock_hz * 1e9);
+    constexpr uint64_t _60HZ_PERIOD_NS = 16666667;
+
+    TimeAccumulatorNS MachineCycleClock(MACHINE_CLOCK_PERIOD_NS);
+    TimeAccumulatorNS TimersCycleClock(_60HZ_PERIOD_NS);
 
     while (display.processInput(chip8)) {
-        constexpr uint64_t _60HZ_PERIOD_NS = 16666667;
         sound.bufferSamples();
 
-        uint64_t CPU_accu = SDL_GetTicksNS() - CPU_accu_start;
-        uint64_t Timers_accu = SDL_GetTicksNS() - Timers_accu_start;
+        MachineCycleClock.update();
+        TimersCycleClock.update();
 
-        if (CPU_accu >= MIN_CYCLE_TIME_NS) {
+        if (MachineCycleClock.isTimeUp()) {
 
             chip8.cycle();
 
-            CPU_accu_start += CPU_accu;
+            MachineCycleClock.reset();
         }
 
-        if (Timers_accu >= _60HZ_PERIOD_NS) {
+        if (TimersCycleClock.isTimeUp()) {
 
             chip8.decrDelayTimer();
             chip8.decrSoundTimer();
 
-            Timers_accu_start += Timers_accu;
+            TimersCycleClock.reset();
         }
 
         if (chip8.getSoundTimer() > 0u) {

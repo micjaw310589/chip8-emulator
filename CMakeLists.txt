@@ -15,6 +15,8 @@ add_executable(chip8_emulator
         src/Display.hpp
         src/Sound.cpp
         src/Sound.hpp
+        src/TimeAccumulatorNS.cpp
+        src/TimeAccumulatorNS.hpp
 )
 
 find_package(SDL3 REQUIRED)
